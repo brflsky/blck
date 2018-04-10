@@ -20,7 +20,9 @@ class Wallet {
     return this.keyPair.sign(dataHash);
   }
 
-  createTransaction(receipient, amount, transactionPool) {
+  createTransaction(recipient, amount, blockchain, transactionPool) {
+    this.balance = this.calculateBalance(blockchain);
+    // console.log('Wallet.createTransaction: ', recipient, amount);
     if (amount > this.balance) {
       console.log(`Amount ${amount} exceeds current balance ${this.balance}!`);
       return;
@@ -28,13 +30,51 @@ class Wallet {
     let transaction = transactionPool.existingTransaction(this.publicKey);
 
     if (transaction) {
-      transaction.update(this, receipient, amount);
+      transaction.update(this, recipient, amount);
     } else {
-      transaction = Transaction.newTransaction(this, receipient, amount);
+      transaction = Transaction.newTransaction(this, recipient, amount);
       transactionPool.updateOrAddTransaction(transaction);
     }
 
     return transaction;
+  }
+
+  calculateBalance(blockchain) {
+    let { balance } = this;
+    const transactions = [];
+
+    blockchain.chain.forEach(block => block.data.forEach(transaction => transactions.push(transaction)));
+
+    const walletInputsTs = transactions.filter(transaction => transaction.input.address === this.publicKey);
+
+    let startTime = 0;
+
+    if (walletInputsTs.length > 0) {
+      const recentInputT = walletInputsTs.reduce((prev, curr) => prev.input.timestamp > curr.input.timestamp ? prev : curr);
+
+      balance = recentInputT.outputs.find(output => output.address === this.publicKey).amount;
+
+      startTime = recentInputT.input.timestamp;
+    }
+
+    transactions.forEach((transaction) => {
+      if (transaction.input.timestamp > startTime) {
+        //balance += transaction.outputs.find(output => output.adress === this.publicKey).amount();
+        transaction.outputs.forEach((output) => {
+          if (output.address === this.publicKey) {
+            balance += output.amount;
+          }
+        });
+      }
+    });
+
+    return balance;
+  }
+
+  static blockchainWallet() {
+    const blockchainWallet = new this();
+    blockchainWallet.address = 'blockchain-wallet'; // WHY!!!!! he uses blockchain.address not .publicKey
+    return blockchainWallet;
   }
 }
 

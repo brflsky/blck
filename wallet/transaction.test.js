@@ -1,15 +1,16 @@
 const Transaction = require('./transaction');
 const Wallet = require('./index');
+const { MINING_REWARD } = require('../config');
 // const ChainUtil = require('../chain-util');
 
 describe('Transaction', () => {
-  let transaction, wallet, receipient, amount;
+  let transaction, wallet, recipient, amount;
 
   beforeEach(() => {
     wallet = new Wallet();
     amount = 50;
-    receipient = 'r34ddee';
-    transaction = Transaction.newTransaction(wallet, receipient, amount);
+    recipient = 'r34ddee';
+    transaction = Transaction.newTransaction(wallet, recipient, amount);
   });
 
   it('outputs the `amount` substructed from the wallet balance', () => {
@@ -19,7 +20,7 @@ describe('Transaction', () => {
   });
 
   it('outputs the `amount` added to receipent account', () => {
-    expect(transaction.outputs.find(output => output.address === receipient).amount)
+    expect(transaction.outputs.find(output => output.address === recipient).amount)
       .toEqual(amount);
   });
 
@@ -37,7 +38,7 @@ describe('Transaction', () => {
   });
 
   it('should not allow transaction where amount exceeds the ballance', () => {
-    const tr1 = Transaction.newTransaction(wallet, receipient, amount * 10000);
+    const tr1 = Transaction.newTransaction(wallet, recipient, amount * 10000);
     expect(tr1).toEqual(undefined);
   });
 
@@ -55,9 +56,20 @@ describe('Transaction', () => {
         .toBe(wallet.balance - amount - nextAmount);
     });
 
-    it('outputs amout for next receipient', () => {
+    it('outputs amout for next recipient', () => {
       expect(transaction.outputs.find(output => output.address === nextRecipient).amount)
         .toBe(nextAmount);
+    });
+  });
+
+  describe('creating reword transaction', () => {
+    beforeEach(() => {
+      transaction = Transaction.rewardTransaction(wallet, Wallet.blockchainWallet());
+    });
+    it('reowrds miner\'s wallet', () => {
+      // console.log('TR:', transaction);
+      expect(transaction.outputs.find(output => output.address === wallet.publicKey).amount)
+        .toBe(MINING_REWARD);
     });
   });
 });
