@@ -10,7 +10,7 @@ class Wallet {
     this.publicKey = this.keyPair.getPublic().encode('hex');
   }
 
-  toStrign() {
+  toString() {
     return `Wallet -
               publicKey : ${this.publicKey.toString()}
               balance   : ${this.ballance}`;
