@@ -2,7 +2,7 @@ const Wallet = require('./wallet');
 
 const wallet = new Wallet();
 
-console.log(wallet.toStrign());
+console.log(wallet.toString());
 
 // const Blockchain = require('./blockchain');
 
